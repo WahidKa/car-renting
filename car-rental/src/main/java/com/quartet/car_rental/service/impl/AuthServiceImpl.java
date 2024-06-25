@@ -1,0 +1,87 @@
+package com.quartet.car_rental.service.impl;
+
+import com.quartet.car_rental.dto.request.AuthRequest;
+import com.quartet.car_rental.dto.response.AuthResponse;
+import com.quartet.car_rental.dao.UserRepository;
+import com.quartet.car_rental.dao.entities.User;
+import com.quartet.car_rental.service.AuthService;
+import com.quartet.car_rental.token.TokenService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Service
+public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LogManager.getLogger(AuthServiceImpl.class);
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TokenService tokenService;
+
+    @Override
+    public AuthResponse register(AuthRequest request) {
+        List<String> errors = new ArrayList<>();
+        try {
+            logger.info("### service - Register User - Begin ###");
+
+            Optional<User> existingUser = userRepository.findByUsername(request.getUsername());
+            if (existingUser.isPresent()) {
+                logger.info("### service - Register User - Username {} already exists ###", request.getUsername());
+                errors.add("Username already exists");
+                return new AuthResponse("400", errors);
+            }
+
+            User user = new User();
+            user.setUsername(request.getUsername());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            userRepository.save(user);
+
+            logger.info("### service - Register User - User {} registered successfully ###", request.getUsername());
+            return new AuthResponse("200", "User registered successfully");
+        } catch (Exception exp) {
+            logger.error("### service - Register User - Technical error - End ###", exp);
+            errors.add("Technical error");
+            return new AuthResponse("500", errors);
+        }
+    }
+
+    @Override
+    public Map<String, String> login(AuthRequest request) {
+        List<String> errors = new ArrayList<>();
+        try {
+            logger.info("### service - User Login - Begin ###");
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+
+            logger.info("### service - User Login - User {} authenticated successfully ###", request.getUsername());
+            return tokenService.generateToken("password", request.getUsername(), request.getPassword(), null);
+        } catch (Exception exp) {
+            logger.error("### service - User Login - Technical error - End ###", exp);
+            errors.add("Invalid username or password");
+            return Collections.singletonMap("error", "Invalid username or password");
+        }
+    }
+
+    @Override
+    public Map<String, String> generateToken(String grantType, String username, String password, String refreshToken) throws Exception {
+        return tokenService.generateToken(grantType, username, password, refreshToken);
+    }
+}
