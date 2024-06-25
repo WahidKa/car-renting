@@ -1,6 +1,10 @@
 package com.quartet.car_rental.service.impl;
 
+import com.quartet.car_rental.dao.AgencyRepository;
+import com.quartet.car_rental.dao.entities.Agency;
+import com.quartet.car_rental.dao.entities.UserRole;
 import com.quartet.car_rental.dto.request.AuthRequest;
+import com.quartet.car_rental.dto.request.RegistrationRequest;
 import com.quartet.car_rental.dto.response.AuthResponse;
 import com.quartet.car_rental.dao.UserRepository;
 import com.quartet.car_rental.dao.entities.User;
@@ -29,13 +33,16 @@ public class AuthServiceImpl implements AuthService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private AgencyRepository agencyRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private TokenService tokenService;
 
     @Override
-    public AuthResponse register(AuthRequest request) {
+    public AuthResponse register(RegistrationRequest request) {
         List<String> errors = new ArrayList<>();
         try {
             logger.info("### service - Register User - Begin ###");
@@ -50,6 +57,17 @@ public class AuthServiceImpl implements AuthService {
             User user = new User();
             user.setUsername(request.getUsername());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setEmail(request.getEmail());
+            user.setRole(request.getRole());
+
+            if (request.getRole() == UserRole.AGENCY) {
+                Agency agency = new Agency();
+                agency.setName(request.getAgencyName());
+                agency.setAddress(request.getAgencyAddress());
+                agency = agencyRepository.save(agency);
+                user.setAgency(agency);
+            }
+
             userRepository.save(user);
 
             logger.info("### service - Register User - User {} registered successfully ###", request.getUsername());

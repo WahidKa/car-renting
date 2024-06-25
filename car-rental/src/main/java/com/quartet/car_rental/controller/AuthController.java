@@ -1,6 +1,7 @@
 package com.quartet.car_rental.controller;
 
 import com.quartet.car_rental.dto.request.AuthRequest;
+import com.quartet.car_rental.dto.request.RegistrationRequest;
 import com.quartet.car_rental.dto.response.AuthResponse;
 import com.quartet.car_rental.service.AuthService;
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +24,7 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request,
+    public ResponseEntity<AuthResponse> register(@RequestBody RegistrationRequest request,
                                                  @RequestHeader Map<String, String> headers) {
         logger.info("### controller - Register User - Begin ###");
         AuthResponse response = authService.register(request);
