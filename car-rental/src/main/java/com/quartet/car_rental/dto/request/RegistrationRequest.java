@@ -8,7 +8,8 @@ public class RegistrationRequest {
     private String username;
     private String password;
     private String email;
-    private UserRole role; // CLIENT or AGENCY
+    private String role; // CLIENT or AGENCY
     private String agencyName; // Optional, used if role is AGENCY
     private String agencyAddress; // Optional, used if role is AGENCY
+    private String location;
 }

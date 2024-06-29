@@ -28,4 +28,7 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "agency_id")
     private Agency agency;
+
+    @Column(name = "location", length = 100)
+    private String location;
 }

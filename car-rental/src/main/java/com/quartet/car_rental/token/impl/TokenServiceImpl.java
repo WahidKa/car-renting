@@ -64,7 +64,7 @@ public class TokenServiceImpl implements TokenService {
         JwtClaimsSet accessTokenClaims = JwtClaimsSet.builder()
                 .subject(subject)
                 .issuedAt(now)
-                .expiresAt(now.plus(30, ChronoUnit.MINUTES))
+                .expiresAt(now.plus(7, ChronoUnit.DAYS))
                 .issuer("car-rental-service")
                 .claim("scope", scope)
                 .build();
@@ -76,9 +76,7 @@ public class TokenServiceImpl implements TokenService {
             JwtClaimsSet refreshTokenClaims = JwtClaimsSet.builder()
                     .subject(subject)
                     .issuedAt(now)
-                    .expiresAt(now.plus(7, ChronoUnit.DAYS))
-                    .issuer("car-rental-service")
-                    .claim("scope", scope)
+                    .expiresAt(now.plus(30, ChronoUnit.DAYS))
                     .build();
 
             String refreshTokenValue = jwtEncoder.encode(JwtEncoderParameters.from(refreshTokenClaims)).getTokenValue();

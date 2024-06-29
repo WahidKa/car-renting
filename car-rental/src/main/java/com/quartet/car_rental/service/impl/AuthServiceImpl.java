@@ -1,13 +1,13 @@
 package com.quartet.car_rental.service.impl;
 
 import com.quartet.car_rental.dao.AgencyRepository;
+import com.quartet.car_rental.dao.UserRepository;
 import com.quartet.car_rental.dao.entities.Agency;
+import com.quartet.car_rental.dao.entities.User;
 import com.quartet.car_rental.dao.entities.UserRole;
 import com.quartet.car_rental.dto.request.AuthRequest;
 import com.quartet.car_rental.dto.request.RegistrationRequest;
 import com.quartet.car_rental.dto.response.AuthResponse;
-import com.quartet.car_rental.dao.UserRepository;
-import com.quartet.car_rental.dao.entities.User;
 import com.quartet.car_rental.service.AuthService;
 import com.quartet.car_rental.token.TokenService;
 import org.apache.logging.log4j.LogManager;
@@ -47,6 +47,19 @@ public class AuthServiceImpl implements AuthService {
         try {
             logger.info("### service - Register User - Begin ###");
 
+            // Validate role
+            UserRole userRole;
+            try {
+                userRole = UserRole.valueOf(request.getRole().toUpperCase());
+                if (!EnumSet.of(UserRole.AGENCY, UserRole.CLIENT).contains(userRole)) {
+                    throw new IllegalArgumentException("Invalid role");
+                }
+            } catch (IllegalArgumentException e) {
+                logger.warn("### service - Register User - Invalid role: {} ###", request.getRole());
+                errors.add("Invalid role. Accepted values are: CLIENT, AGENCY");
+                return new AuthResponse("400", errors);
+            }
+
             Optional<User> existingUser = userRepository.findByUsername(request.getUsername());
             if (existingUser.isPresent()) {
                 logger.info("### service - Register User - Username {} already exists ###", request.getUsername());
@@ -58,9 +71,10 @@ public class AuthServiceImpl implements AuthService {
             user.setUsername(request.getUsername());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setEmail(request.getEmail());
-            user.setRole(request.getRole());
+            user.setRole(userRole);
+            user.setLocation(request.getLocation());
 
-            if (request.getRole() == UserRole.AGENCY) {
+            if (userRole == UserRole.AGENCY) {
                 Agency agency = new Agency();
                 agency.setName(request.getAgencyName());
                 agency.setAddress(request.getAgencyAddress());
@@ -89,7 +103,22 @@ public class AuthServiceImpl implements AuthService {
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (user.getRole() != UserRole.AGENCY && user.getRole() != UserRole.CLIENT) {
+                logger.warn("### service - User Login - User {} has invalid role: {} ###", request.getUsername(), user.getRole());
+                errors.add("Invalid role");
+                return Collections.singletonMap("error", "Invalid role");
+            }
+
             logger.info("### service - User Login - User {} authenticated successfully ###", request.getUsername());
+            Map<String, String> tokens = tokenService.generateToken("password", request.getUsername(), request.getPassword(), null);
+
+            // Update user location during login
+            user.setLocation(request.getLocation());
+            userRepository.save(user);
+
             return tokenService.generateToken("password", request.getUsername(), request.getPassword(), null);
         } catch (Exception exp) {
             logger.error("### service - User Login - Technical error - End ###", exp);
