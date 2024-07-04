@@ -12,14 +12,20 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "username", length = 60, nullable = false, unique = true)
-    private String username;
+    @Column(name = "firstname", length = 15, nullable = false)
+    private String firstName;
+
+    @Column(name = "lastname", length = 15, nullable = false)
+    private String lastName;
 
     @Column(name = "password", length = 60, nullable = false)
     private String password;
 
     @Column(name = "email", length = 100, nullable = false, unique = true)
     private String email;
+
+    @Column(name = "tel", length = 20, unique = true)
+    private String tel;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)

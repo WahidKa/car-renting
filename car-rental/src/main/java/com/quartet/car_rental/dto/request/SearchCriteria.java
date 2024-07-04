@@ -9,6 +9,5 @@ public class SearchCriteria {
     private Integer year;
     private String color;
     private Double minPrice;
-    private Double maxPrice;
     private String location;
 }

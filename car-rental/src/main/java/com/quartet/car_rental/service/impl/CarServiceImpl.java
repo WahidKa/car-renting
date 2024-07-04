@@ -17,7 +17,6 @@ import com.quartet.car_rental.service.CarService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +49,7 @@ public class CarServiceImpl implements CarService {
     public CarResponse addCar(String username, CarRequest request) throws Exception {
         logger.info("### service - Add Car - Begin ###");
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new Exception("User not found"));
 
         if (!user.getRole().name().equals("AGENCY")) {
@@ -101,7 +100,7 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public CarResponse updateCar(String username, Long id, CarRequest request) throws Exception {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new Exception("User not found"));
 
         if (!user.getRole().name().equals("AGENCY")) {
@@ -141,7 +140,7 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public CarResponse deleteCar(String username, Long id, int quantity) throws Exception {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new Exception("User not found"));
 
         if (!user.getRole().name().equals("AGENCY")) {

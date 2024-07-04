@@ -27,9 +27,6 @@ public class CarSpecification {
             if (criteria.getMinPrice() != null) {
                 predicate = cb.and(predicate, cb.greaterThanOrEqualTo(root.get("price"), criteria.getMinPrice()));
             }
-            if (criteria.getMaxPrice() != null) {
-                predicate = cb.and(predicate, cb.lessThanOrEqualTo(root.get("price"), criteria.getMaxPrice()));
-            }
             if (criteria.getLocation() != null) {
                 predicate = cb.and(predicate, cb.like(root.get("agency").get("address"), "%" + criteria.getLocation() + "%"));
             }

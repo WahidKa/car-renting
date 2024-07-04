@@ -35,27 +35,27 @@ public class TokenServiceImpl implements TokenService {
     private UserRepository userRepository;
 
     @Override
-    public Map<String, String> generateToken(String grantType, String username, String password, String refreshToken) throws Exception {
+    public Map<String, String> generateToken(String grantType, String email, String password, String refreshToken) throws Exception {
         String subject;
         String scope;
 
         if ("password".equals(grantType)) {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
+                    new UsernamePasswordAuthenticationToken(email, password)
             );
             subject = authentication.getName();
         } else if ("refreshToken".equals(grantType)) {
             if (refreshToken == null) {
-                throw new Exception("Refresh Token is required");
+                return null;
             }
             Jwt decodedJwt = jwtDecoder.decode(refreshToken);
             subject = decodedJwt.getSubject();
         } else {
-            throw new Exception("Unsupported grant type");
+            return null;
         }
 
         // Fetch the user from the repository to get the role
-        User user = userRepository.findByUsername(subject).orElseThrow(() -> new Exception("User not found"));
+        User user = userRepository.findByEmail(subject).orElseThrow(() -> new Exception("User not found"));
         scope = user.getRole().name();
 
         Map<String, String> tokens = new HashMap<>();
@@ -86,4 +86,5 @@ public class TokenServiceImpl implements TokenService {
         logger.info("### service - Generate Token - Tokens generated for user: {} ###", subject);
         return tokens;
     }
+
 }

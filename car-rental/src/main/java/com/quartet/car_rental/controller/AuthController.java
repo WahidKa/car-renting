@@ -3,6 +3,7 @@ package com.quartet.car_rental.controller;
 import com.quartet.car_rental.dto.request.AuthRequest;
 import com.quartet.car_rental.dto.request.RegistrationRequest;
 import com.quartet.car_rental.dto.response.AuthResponse;
+import com.quartet.car_rental.dto.response.LoginResponse;
 import com.quartet.car_rental.service.AuthService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,42 +25,47 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegistrationRequest request,
-                                                 @RequestHeader Map<String, String> headers) {
+    public ResponseEntity<AuthResponse> register(@RequestBody RegistrationRequest request) {
         logger.info("### controller - Register User - Begin ###");
         AuthResponse response = authService.register(request);
         if ("200".equals(response.getStatus())) {
-            logger.info("User {} registered successfully", request.getUsername());
+            logger.info("User {} registered successfully", request.getEmail());
             logger.info("### controller - Register User - End ###");
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
-            logger.error("Registration error: {}", response.getErrors());
+            logger.error("Registration error: {}", response.getMessage());
             logger.info("### controller - Register User - Error ###");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest request,
-                                                     @RequestHeader Map<String, String> headers) {
+    public ResponseEntity<LoginResponse> login(@RequestBody AuthRequest request) {
         logger.info("### controller - User Login - Begin ###");
-        Map<String, String> tokens = authService.login(request);
-        if (tokens.containsKey("error")) {
-            logger.error("Login error: {}", tokens.get("error"));
+        LoginResponse response = authService.login(request);
+        if (!"200".equals(response.getStatus())) {
+            logger.error("Login error: {}", response.getMessage());
             logger.info("### controller - User Login - Error ###");
-            return new ResponseEntity<>(tokens, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         } else {
-            logger.info("User {} logged in successfully", request.getUsername());
+            logger.info("User {} logged in successfully", request.getEmail());
             logger.info("### controller - User Login - End ###");
-            return new ResponseEntity<>(tokens, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
     }
 
     @PostMapping("/token")
     public ResponseEntity<Map<String, String>> getToken(@RequestParam String grantType,
-                                                        @RequestParam(required = false) String refreshToken,
                                                         @RequestHeader Map<String, String> headers) throws Exception {
         logger.info("### controller - Generate Token - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        String refreshToken = authorizationHeader.substring(7);
         Map<String, String> tokens = authService.generateToken(grantType, null, null, refreshToken);
         if (tokens.containsKey("error")) {
             logger.error("Token generation error: {}", tokens.get("error"));
@@ -71,4 +77,5 @@ public class AuthController {
             return new ResponseEntity<>(tokens, HttpStatus.OK);
         }
     }
+
 }
