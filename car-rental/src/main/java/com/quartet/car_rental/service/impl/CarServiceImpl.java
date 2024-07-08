@@ -201,8 +201,9 @@ public class CarServiceImpl implements CarService {
     @Override
     public List<CarResponse> getCarsByLocation(User user) {
         logger.info("### service - Get Cars By Location - Begin ###");
-        return carRepository.findAll().stream()
-                .filter(car -> car.getAgency().getAddress().contains(user.getLocation()))
+        return carRepository.findAll()
+                .stream()
+                /*.filter(car -> car.getAgency().getAddress().contains(user.getLatitude()))*/
                 .map(car -> new CarResponse(car.getMake(), car.getModel(), car.getYear(), car.getStatus(), car.getColor(), car.getQuantity(), car.getPrice()))
                 .collect(Collectors.toList());
     }

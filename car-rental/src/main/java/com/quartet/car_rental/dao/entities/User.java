@@ -35,6 +35,9 @@ public class User {
     @JoinColumn(name = "agency_id")
     private Agency agency;
 
-    @Column(name = "location", length = 100)
-    private String location;
+    @Column(name = "latitude", length = 100)
+    private Double latitude;
+
+    @Column(name = "longitude", length = 100)
+    private Double longitude;
 }

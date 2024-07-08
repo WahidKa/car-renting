@@ -82,15 +82,6 @@ public class AuthServiceImpl implements AuthService {
             }
             logger.info("------ Password is valid for user: {} ------", request.getEmail());
 
-            // Validate location
-            logger.info("------ Validating location for user: {} ------", request.getLocation());
-            if (request.getLocation() == null || !request.getLocation().matches("^[a-zA-Z\\s]+$")) {
-                logger.info("------ Invalid location: {} ------", request.getLocation());
-                logger.info("------ service - Register User - End (Invalid location) ------");
-                return new AuthResponse("400", "Location must contain only letters.");
-            }
-            logger.info("------ Location is valid for user: {} ------", request.getLocation());
-
             // Check if the user already exists
             logger.info("------ Checking if user already exists: {} ------", request.getEmail());
             Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
@@ -108,7 +99,6 @@ public class AuthServiceImpl implements AuthService {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setEmail(request.getEmail());
             user.setRole(UserRole.CLIENT);
-            user.setLocation(request.getLocation());
 
             userRepository.save(user);
 
@@ -167,12 +157,11 @@ public class AuthServiceImpl implements AuthService {
                 return new LoginResponse("500", "Error During Token Generation", null, null);
             }
 
-            // Update user location if provided
-            if (request.getLocation() != null && !request.getLocation().isEmpty()) {
-                logger.info("------ Updating location for user: {} ------", request.getEmail());
-                user.setLocation(request.getLocation());
-                userRepository.save(user);
-            }
+            // Save user's location
+            user.setLatitude(request.getLatitude());
+            user.setLongitude(request.getLongitude());
+            logger.info("------ Updating location for user: {} ------", request.getEmail());
+            userRepository.save(user);
 
             logger.info("------ User {} authenticated successfully ------", request.getEmail());
             logger.info("------ service - User Login - End (Success) ------");
