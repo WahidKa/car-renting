@@ -2,12 +2,15 @@ package com.quartet.car_rental.service.impl;
 
 import com.quartet.car_rental.dao.AgencyRepository;
 import com.quartet.car_rental.dao.UserRepository;
+import com.quartet.car_rental.dao.entities.Agency;
 import com.quartet.car_rental.dao.entities.User;
 import com.quartet.car_rental.dao.entities.UserRole;
 import com.quartet.car_rental.dto.request.AuthRequest;
 import com.quartet.car_rental.dto.request.RegistrationRequest;
+import com.quartet.car_rental.dto.request.UpdateRoleRequest;
 import com.quartet.car_rental.dto.response.AuthResponse;
 import com.quartet.car_rental.dto.response.LoginResponse;
+import com.quartet.car_rental.dto.response.UpdateRoleResponse;
 import com.quartet.car_rental.service.AuthService;
 import com.quartet.car_rental.token.TokenService;
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +20,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -40,6 +45,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private JwtDecoder jwtDecoder;
 
     @Override
     public AuthResponse register(RegistrationRequest request) {
@@ -175,5 +183,53 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Map<String, String> generateToken(String grantType, String email, String password, String refreshToken) throws Exception {
         return tokenService.generateToken(grantType, email, password, refreshToken);
+    }
+
+    @Override
+    public UpdateRoleResponse updateRole(UpdateRoleRequest request, String token) {
+        UpdateRoleResponse response = new UpdateRoleResponse();
+        try {
+            // Decode JWT to get the email
+            Jwt decodedJwt = jwtDecoder.decode(token);
+            String email = decodedJwt.getSubject();
+
+            // Find the user by email
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (!userOptional.isPresent()) {
+                response.setStatus("404");
+                response.setMessage("User not found");
+                return response;
+            }
+
+            User user = userOptional.get();
+
+            // Create and save the agency
+            Agency agency = new Agency();
+            agency.setName(request.getCompanyName());
+            agency.setFleetSize(request.getFleetSize());
+            agency.setAddress(request.getAddress());
+            agency.setCity(request.getCity());
+            agency.setLatitude(request.getLatitude());
+            agency.setLongitude(request.getLongitude());
+
+            Agency savedAgency = agencyRepository.save(agency);
+
+            // Update user details and set role to AGENCY
+            user.setRole(UserRole.AGENCY);
+            user.setTel(request.getContactNumber());
+            user.setJob(request.getJobTitle());
+            user.setAgency(savedAgency);
+
+            // Save the updated user
+            userRepository.save(user);
+
+            response.setStatus("200");
+            response.setMessage("You have become an agency successfully");
+        } catch (Exception e) {
+            response.setStatus("500");
+            response.setMessage("Technical error: " + e.getMessage());
+        }
+
+        return response;
     }
 }

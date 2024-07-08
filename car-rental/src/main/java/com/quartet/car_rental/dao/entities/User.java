@@ -27,6 +27,9 @@ public class User {
     @Column(name = "tel", length = 20, unique = true)
     private String tel;
 
+    @Column(name = "job", length = 50)
+    private String job;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;

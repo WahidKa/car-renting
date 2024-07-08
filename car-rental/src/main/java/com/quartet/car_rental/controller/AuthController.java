@@ -2,8 +2,10 @@ package com.quartet.car_rental.controller;
 
 import com.quartet.car_rental.dto.request.AuthRequest;
 import com.quartet.car_rental.dto.request.RegistrationRequest;
+import com.quartet.car_rental.dto.request.UpdateRoleRequest;
 import com.quartet.car_rental.dto.response.AuthResponse;
 import com.quartet.car_rental.dto.response.LoginResponse;
+import com.quartet.car_rental.dto.response.UpdateRoleResponse;
 import com.quartet.car_rental.service.AuthService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,6 +77,30 @@ public class AuthController {
             logger.info("Token generated successfully");
             logger.info("### controller - Generate Token - End ###");
             return new ResponseEntity<>(tokens, HttpStatus.OK);
+        }
+    }
+
+
+    @PatchMapping("/becomeAgency")
+    public ResponseEntity<UpdateRoleResponse> updateRole(@RequestHeader Map<String, String> headers,
+                                                         @RequestBody UpdateRoleRequest request) throws Exception {
+        logger.info("### controller - Become Agency - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7);
+        UpdateRoleResponse response = authService.updateRole(request, token);
+        if (response == null) {
+            logger.info("### controller - Become Agency - Error ###");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } else {
+            logger.info("You become an agency successfully");
+            logger.info("### controller - Become Agency - End ###");
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
     }
 
