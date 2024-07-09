@@ -1,8 +1,10 @@
 package com.quartet.car_rental.service.impl;
 
 import com.quartet.car_rental.dao.AgencyRepository;
+import com.quartet.car_rental.dao.NotificationRepository;
 import com.quartet.car_rental.dao.UserRepository;
 import com.quartet.car_rental.dao.entities.Agency;
+import com.quartet.car_rental.dao.entities.Notification;
 import com.quartet.car_rental.dao.entities.User;
 import com.quartet.car_rental.dao.entities.UserRole;
 import com.quartet.car_rental.dto.request.AuthRequest;
@@ -42,6 +44,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private TokenService tokenService;
@@ -223,6 +228,13 @@ public class AuthServiceImpl implements AuthService {
             // Save the updated user
             userRepository.save(user);
 
+            // Create and save the notification
+            Notification notification = new Notification();
+            notification.setUser(user);
+            notification.setMessage("Congratulations, you have officially become an agency. Let's add your cars.");
+            notification.setTimestamp(new Date());
+            notificationRepository.save(notification);
+
             response.setStatus("200");
             response.setMessage("You have become an agency successfully");
         } catch (Exception e) {
@@ -232,4 +244,5 @@ public class AuthServiceImpl implements AuthService {
 
         return response;
     }
+
 }
