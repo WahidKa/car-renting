@@ -9,7 +9,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificationExecutor<Car> {
-    Optional<Car> findByMakeAndModelAndYearAndColorAndAgency(String make, String model, int year, String color, Agency agency);
-
     List<Car> findByAgencyId(Long agencyId);
 }
