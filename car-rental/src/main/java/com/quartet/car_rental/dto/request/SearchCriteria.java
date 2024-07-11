@@ -6,8 +6,8 @@ import lombok.Data;
 public class SearchCriteria {
     private String make;
     private String model;
-    private Integer year;
-    private String color;
+    private String type;
+    private String transmissionType;
+    private String fuelType;
     private Double minPrice;
-    private String location;
 }

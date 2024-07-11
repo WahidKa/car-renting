@@ -27,14 +27,35 @@ public class Car {
     @Column(name = "status", nullable = false)
     private CarStatus status;
 
-    @Column(name = "color", length = 30)
-    private String color;
+    @Column(name = "fuelType", length = 40)
+    private String fuelType;
 
-    @Column(name = "quantity", nullable = false)
-    private int quantity;
+    @Column(name = "transmissionType", length = 40)
+    private String transmissionType;
+
+    @Column(name = "type", length = 40)
+    private String type;
+
+    @Column(name = "matriculate", length = 40)
+    private String matriculate;
+
+    @Column(name = "description", length = 2000)
+    private String description;
+
+    @Column(name = "seats", length = 40)
+    private int seats;
 
     @Column(name = "price", nullable = false)
     private double price;
+
+    @Column(name = "clicks", nullable = false)
+    private double clicks = 0;
+
+    @Column(name = "promotion")
+    private Boolean promotion = false;
+
+    @Column(name = "percentage")
+    private float percentage;
 
     @ManyToOne
     @JoinColumn(name = "agency_id", nullable = false)

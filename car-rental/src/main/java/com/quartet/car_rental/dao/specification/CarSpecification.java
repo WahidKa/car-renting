@@ -12,26 +12,28 @@ public class CarSpecification {
     public static Specification<Car> search(SearchCriteria criteria) {
         return (root, query, cb) -> {
             Predicate predicate = cb.conjunction();
+
             if (criteria.getMake() != null) {
                 predicate = cb.and(predicate, cb.equal(root.get("make"), criteria.getMake()));
             }
             if (criteria.getModel() != null) {
                 predicate = cb.and(predicate, cb.equal(root.get("model"), criteria.getModel()));
             }
-            if (criteria.getYear() != null) {
-                predicate = cb.and(predicate, cb.equal(root.get("year"), criteria.getYear()));
+            if (criteria.getType() != null) {
+                predicate = cb.and(predicate, cb.equal(root.get("type"), criteria.getType()));
             }
-            if (criteria.getColor() != null) {
-                predicate = cb.and(predicate, cb.equal(root.get("color"), criteria.getColor()));
+            if (criteria.getTransmissionType() != null) {
+                predicate = cb.and(predicate, cb.equal(root.get("transmissionType"), criteria.getTransmissionType()));
+            }
+            if (criteria.getFuelType() != null) {
+                predicate = cb.and(predicate, cb.equal(root.get("fuelType"), criteria.getFuelType()));
             }
             if (criteria.getMinPrice() != null) {
                 predicate = cb.and(predicate, cb.greaterThanOrEqualTo(root.get("price"), criteria.getMinPrice()));
-            }
-            if (criteria.getLocation() != null) {
-                predicate = cb.and(predicate, cb.like(root.get("agency").get("address"), "%" + criteria.getLocation() + "%"));
             }
             predicate = cb.and(predicate, cb.equal(root.get("status"), CarStatus.AVAILABLE));
             return predicate;
         };
     }
 }
+

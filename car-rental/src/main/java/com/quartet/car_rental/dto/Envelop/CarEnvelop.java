@@ -1,12 +1,12 @@
-package com.quartet.car_rental.dto.request;
+package com.quartet.car_rental.dto.Envelop;
 
 import lombok.Data;
 
-import javax.persistence.Column;
 import java.util.List;
 
 @Data
-public class CarRequest {
+public class CarEnvelop {
+    private String id;
     private String make;
     private String model;
     private String fuelType;
@@ -17,8 +17,8 @@ public class CarRequest {
     private int year;
     private String description;
     private double price;
-    private List<String> imageFileNames; // List of image file names
-    private String status;//update
-    private Boolean promotion;//update
-    private float percentage;//update
+    private List<String> imageFileNames;
+    private String status;
+    private Boolean promotion;
+    private float percentage;
 }

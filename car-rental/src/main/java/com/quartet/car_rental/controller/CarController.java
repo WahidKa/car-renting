@@ -2,8 +2,11 @@ package com.quartet.car_rental.controller;
 
 import com.quartet.car_rental.dao.UserRepository;
 import com.quartet.car_rental.dao.entities.User;
+import com.quartet.car_rental.dao.entities.UserRole;
 import com.quartet.car_rental.dto.request.CarRequest;
 import com.quartet.car_rental.dto.request.SearchCriteria;
+import com.quartet.car_rental.dto.response.CarListResponse;
+import com.quartet.car_rental.dto.response.CarPatchResponse;
 import com.quartet.car_rental.dto.response.CarResponse;
 import com.quartet.car_rental.helper.JwtUtil;
 import com.quartet.car_rental.service.CarService;
@@ -45,60 +48,94 @@ public class CarController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_AGENCY')")
-    public ResponseEntity<CarResponse> addCar(@RequestHeader Map<String, String> headers,
-                                              @RequestBody CarRequest request) {
-        String authorizationHeader = headers.get("authorization");
+    public ResponseEntity<CarPatchResponse> addCar(@RequestHeader Map<String, String> headers,
+                                                    @RequestBody CarRequest request) {
+        logger.info("### controller - Add Car - Begin ###");
 
+        String authorizationHeader = headers.get("authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            logger.info("Missing or invalid Authorization header ");
-            return new ResponseEntity<>(new CarResponse("Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new CarPatchResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
         }
 
-        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
-        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String token = authorizationHeader.substring(7);
+        Jwt jwt = jwtUtil.validateToken(token);
         String username = jwt.getSubject();
-        try {
-            CarResponse response = carService.addCar(username, request);
+        CarPatchResponse response = carService.addCar(username, request);
+        if ("200".equals(response.getStatus())) {
+            logger.info("### controller - Add Car - Success ###");
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            logger.error("Error adding car: {}", e.getMessage());
-            return new ResponseEntity<>(new CarResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+        } else {
+            logger.error("Error adding car: {}", response.getMessage());
+            logger.info("### controller - Add Car - Error ###");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_AGENCY')")
-    public ResponseEntity<CarResponse> updateCar(@PathVariable("id") Long id,
-                                                 @RequestHeader Map<String, String> headers,
-                                                 @RequestBody CarRequest request) {
+    public ResponseEntity<CarPatchResponse> updateCar(@PathVariable("id") Long id,
+                                                      @RequestHeader Map<String, String> headers,
+                                                      @RequestBody CarRequest request) {
+        logger.info("### controller - Update Car - Begin ###");
+
         String authorizationHeader = headers.get("authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             logger.info("Missing or invalid Authorization header");
-            return new ResponseEntity<>(new CarResponse("Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new CarPatchResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
         }
 
-        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
-        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String token = authorizationHeader.substring(7);
+        Jwt jwt = jwtUtil.validateToken(token);
         String username = jwt.getSubject();
-
-        try {
-            CarResponse response = carService.updateCar(username, id, request);
+        CarPatchResponse response = carService.updateCar(username, id, request);
+        if ("200".equals(response.getStatus())) {
+            logger.info("### controller - Update Car - Success ###");
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            logger.error("Error updating car: {}", e.getMessage());
-            return new ResponseEntity<>(new CarResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+        } else {
+            logger.error("Error updating car: {}", response.getMessage());
+            logger.info("### controller - Update Car - Error ###");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_AGENCY')")
-    public ResponseEntity<CarResponse> deleteCar(@PathVariable Long id,
-                                                 @RequestHeader Map<String, String> headers,
-                                                 @RequestParam(name = "quantity", defaultValue = "1") int quantity) {
+    public ResponseEntity<CarPatchResponse> deleteCar(@PathVariable Long id,
+                                                      @RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Delete Car - Begin ###");
+
         String authorizationHeader = headers.get("authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             logger.info("Missing or invalid Authorization header");
-            return new ResponseEntity<>(new CarResponse("Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new CarPatchResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String username = jwt.getSubject();
+
+        CarPatchResponse response = carService.deleteCar(username, id);
+        if ("200".equals(response.getStatus())) {
+            logger.info("### controller - Delete Car - Success ###");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            logger.error("Error deleting car: {}", response.getMessage());
+            logger.info("### controller - Delete Car - Error ###");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CarResponse> getCarDetails(@PathVariable Long id,
+                                                     @RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Get Car Details - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new CarResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
         }
 
         String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
@@ -106,25 +143,26 @@ public class CarController {
         String username = jwt.getSubject();
 
         try {
-            CarResponse response = carService.deleteCar(username, id, quantity);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            logger.error("Error deleting car: {}", e.getMessage());
-            return new ResponseEntity<>(new CarResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-    }
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CarResponse> getCarDetails(@PathVariable Long id) {
-        try {
-            CarResponse response = carService.getCarDetails(id);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            CarResponse response = carService.getCarDetails(id, user);
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Get Car Details - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                logger.error("Error fetching car details: {}", response.getMessage());
+                logger.info("### controller - Get Car Details - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             logger.error("Error fetching car details: {}", e.getMessage());
-            return new ResponseEntity<>(new CarResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new CarResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+
+    /*
     @GetMapping
     public ResponseEntity<List<CarResponse>> getAllCars(@RequestHeader Map<String, String> headers) {
         String authorizationHeader = headers.get("authorization");
@@ -154,9 +192,55 @@ public class CarController {
         }
     }
 
+    */
+    @GetMapping
+    public ResponseEntity<CarListResponse> getAllCars(@RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Get All Cars - Begin ###");
+        CarListResponse response = new CarListResponse();
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            response.setStatus("403");
+            response.setMessage("Missing or invalid Authorization header");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String username = jwt.getSubject();
+
+        try {
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (user.getRole().equals(UserRole.AGENCY)) {
+                response = carService.getCarsByAgency(user.getAgency().getId());
+            } else {
+                response = carService.getCarsByLocation(user);
+            }
+
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Get All Cars - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                logger.error("Error fetching cars: {}", response.getMessage());
+                logger.info("### controller - Get All Cars - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching cars: {}", e.getMessage());
+            response.setStatus("500");
+            response.setMessage("Technical error: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/search")
-    public ResponseEntity<List<CarResponse>> searchCars(@RequestHeader Map<String, String> headers,
+    public ResponseEntity<CarListResponse> searchCars(@RequestHeader Map<String, String> headers,
                                                         @RequestBody SearchCriteria criteria) {
+        logger.info("### controller - Search Cars - Begin ###");
+
         String authorizationHeader = headers.get("authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             logger.info("Missing or invalid Authorization header");
@@ -165,11 +249,17 @@ public class CarController {
 
         String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
         Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
-        String username = jwt.getSubject();
+        String email = jwt.getSubject();
 
         try {
-            List<CarResponse> cars = carService.searchCars(criteria);
-            return new ResponseEntity<>(cars, HttpStatus.OK);
+            CarListResponse cars = carService.searchCars(criteria);
+            if (cars != null) {
+                logger.info("### controller - Search Cars - Success ###");
+                return new ResponseEntity<>(cars, HttpStatus.OK);
+            } else {
+                logger.info("### controller - Search Cars - No cars found ###");
+                return new ResponseEntity<>(cars, HttpStatus.NOT_FOUND);
+            }
         } catch (Exception e) {
             logger.error("Error fetching cars: {}", e.getMessage());
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
