@@ -15,5 +15,14 @@ public class CarListResponse {
     private List<CarListEnvelop> carsByLocation;
     private List<CarListEnvelop> carsByClick;
     private List<CarListEnvelop> carsByAgency;
-    private List<CarListEnvelop> searchResult;
+    private List<CarListEnvelop> carsWithPromotions;
+    private List<CarListEnvelop> otherCars;
+
+    public CarListResponse() {
+    }
+
+    public CarListResponse(String status, String message) {
+        this.status = status;
+        this.message= message;
+    }
 }

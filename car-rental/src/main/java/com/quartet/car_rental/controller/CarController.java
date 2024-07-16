@@ -206,31 +206,30 @@ public class CarController {
 
     @PostMapping("/search")
     public ResponseEntity<CarListResponse> searchCars(@RequestHeader Map<String, String> headers,
-                                                        @RequestBody SearchCriteria criteria) {
+                                                      @RequestBody SearchCriteria criteria) {
         logger.info("### controller - Search Cars - Begin ###");
 
         String authorizationHeader = headers.get("authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             logger.info("Missing or invalid Authorization header");
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new CarListResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
         }
 
         String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
         Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
-        String email = jwt.getSubject();
 
         try {
-            CarListResponse cars = carService.searchCars(criteria);
-            if (cars != null) {
+            CarListResponse response = carService.searchCars(criteria);
+            if ("200".equals(response.getStatus())) {
                 logger.info("### controller - Search Cars - Success ###");
-                return new ResponseEntity<>(cars, HttpStatus.OK);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 logger.info("### controller - Search Cars - No cars found ###");
-                return new ResponseEntity<>(cars, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             logger.error("Error fetching cars: {}", e.getMessage());
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new CarListResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

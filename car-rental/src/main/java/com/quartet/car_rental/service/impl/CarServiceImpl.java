@@ -440,12 +440,27 @@ public class CarServiceImpl implements CarService {
         CarListResponse response = new CarListResponse();
         try {
             logger.info("### service - Search Cars - Begin ###");
+            logger.info("Search criteria: {}", criteria);
+
             Specification<Car> specification = CarSpecification.search(criteria);
-            List<CarListEnvelop> cars = carRepository.findAll(specification).stream()
+            List<Car> cars = carRepository.findAll(specification);
+
+            List<CarListEnvelop> carsWithPromotions = cars.stream()
+                    .filter(Car::getPromotion)
                     .map(this::convertToCarListEnvelop)
                     .collect(Collectors.toList());
+
+            List<CarListEnvelop> otherCars = cars.stream()
+                    .filter(car -> !car.getPromotion())
+                    .map(this::convertToCarListEnvelop)
+                    .collect(Collectors.toList());
+
+            logger.info("Number of cars with promotions found: {}", carsWithPromotions.size());
+            logger.info("Number of other cars found: {}", otherCars.size());
             logger.info("### service - Search Cars - End ###");
-            response.setSearchResult(cars);
+
+            response.setCarsWithPromotions(carsWithPromotions);
+            response.setOtherCars(otherCars);
             response.setStatus("200");
             response.setMessage("Cars fetched successfully");
         } catch (Exception e) {
@@ -455,5 +470,6 @@ public class CarServiceImpl implements CarService {
         }
         return response;
     }
+
 
 }
