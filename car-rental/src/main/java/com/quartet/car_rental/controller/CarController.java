@@ -60,8 +60,8 @@ public class CarController {
 
         String token = authorizationHeader.substring(7);
         Jwt jwt = jwtUtil.validateToken(token);
-        String username = jwt.getSubject();
-        CarPatchResponse response = carService.addCar(username, request);
+        String email = jwt.getSubject();
+        CarPatchResponse response = carService.addCar(email, request);
         if ("200".equals(response.getStatus())) {
             logger.info("### controller - Add Car - Success ###");
             return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -87,8 +87,8 @@ public class CarController {
 
         String token = authorizationHeader.substring(7);
         Jwt jwt = jwtUtil.validateToken(token);
-        String username = jwt.getSubject();
-        CarPatchResponse response = carService.updateCar(username, id, request);
+        String email = jwt.getSubject();
+        CarPatchResponse response = carService.updateCar(email, id, request);
         if ("200".equals(response.getStatus())) {
             logger.info("### controller - Update Car - Success ###");
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -113,9 +113,9 @@ public class CarController {
 
         String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
         Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
-        String username = jwt.getSubject();
+        String email = jwt.getSubject();
 
-        CarPatchResponse response = carService.deleteCar(username, id);
+        CarPatchResponse response = carService.deleteCar(email, id);
         if ("200".equals(response.getStatus())) {
             logger.info("### controller - Delete Car - Success ###");
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -140,10 +140,10 @@ public class CarController {
 
         String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
         Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
-        String username = jwt.getSubject();
+        String email = jwt.getSubject();
 
         try {
-            User user = userRepository.findByEmail(username)
+            User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             CarResponse response = carService.getCarDetails(id, user);
@@ -161,38 +161,6 @@ public class CarController {
         }
     }
 
-
-    /*
-    @GetMapping
-    public ResponseEntity<List<CarResponse>> getAllCars(@RequestHeader Map<String, String> headers) {
-        String authorizationHeader = headers.get("authorization");
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            logger.info("Missing or invalid Authorization header");
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
-
-        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
-        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
-        String username = jwt.getSubject();
-
-        try {
-            User user = userRepository.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            if (user.getRole().name().equals("AGENCY")) {
-                List<CarResponse> cars = carService.getCarsByAgency(user.getAgency().getId());
-                return new ResponseEntity<>(cars, HttpStatus.OK);
-            } else {
-                List<CarResponse> cars = carService.getCarsByLocation(user);
-                return new ResponseEntity<>(cars, HttpStatus.OK);
-            }
-        } catch (Exception e) {
-            logger.error("Error fetching cars: {}", e.getMessage());
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    */
     @GetMapping
     public ResponseEntity<CarListResponse> getAllCars(@RequestHeader Map<String, String> headers) {
         logger.info("### controller - Get All Cars - Begin ###");
@@ -208,10 +176,10 @@ public class CarController {
 
         String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
         Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
-        String username = jwt.getSubject();
+        String email = jwt.getSubject();
 
         try {
-            User user = userRepository.findByEmail(username)
+            User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (user.getRole().equals(UserRole.AGENCY)) {
