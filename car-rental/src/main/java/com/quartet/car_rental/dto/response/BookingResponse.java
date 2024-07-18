@@ -1,33 +1,25 @@
 package com.quartet.car_rental.dto.response;
 
-import com.quartet.car_rental.dao.entities.Booking;
+import com.quartet.car_rental.dto.Envelop.BookingEnvelop;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.util.List;
+
 
 @Data
 @NoArgsConstructor
 public class BookingResponse {
     private String message;
-    private Long bookingId;
-    private String carMake;
-    private String carModel;
-    private Date startDate;
-    private Date endDate;
     private String status;
+    private List<BookingEnvelop> bookings;
 
     public BookingResponse(String message) {
         this.message = message;
     }
 
-    public BookingResponse(String message, Booking booking) {
+    public BookingResponse(String status, String message) {
+        this.status = status;
         this.message = message;
-        this.bookingId = booking.getId();
-        this.carMake = booking.getCar().getMake();
-        this.carModel = booking.getCar().getModel();
-        this.startDate = booking.getStartDate();
-        this.endDate = booking.getEndDate();
-        this.status = booking.getStatus().toString();
     }
 }

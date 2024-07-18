@@ -278,32 +278,6 @@ public class CarServiceImpl implements CarService {
         }
     }
 
-
-    private CarEnvelop convertToCarEnvelop(Car car) {
-        List<String> imagePaths = car.getImages().stream()
-                .map(CarImage::getImagePath)
-                .collect(Collectors.toList());
-
-        CarEnvelop carEnvelop = new CarEnvelop();
-        carEnvelop.setId(car.getId().toString());
-        carEnvelop.setMake(car.getMake());
-        carEnvelop.setModel(car.getModel());
-        carEnvelop.setFuelType(car.getFuelType());
-        carEnvelop.setTransmissionType(car.getTransmissionType());
-        carEnvelop.setType(car.getType());
-        carEnvelop.setMatriculate(car.getMatriculate());
-        carEnvelop.setSeats(car.getSeats());
-        carEnvelop.setYear(car.getYear());
-        carEnvelop.setDescription(car.getDescription());
-        carEnvelop.setPrice(car.getPrice());
-        carEnvelop.setImageFileNames(imagePaths);
-        carEnvelop.setStatus(car.getStatus().toString());
-        carEnvelop.setPromotion(car.getPromotion());
-        carEnvelop.setPercentage(car.getPercentage());
-
-        return carEnvelop;
-    }
-
     @Override
     public CarResponse getCarDetails(Long id, User user) {
         CarResponse response = new CarResponse();
@@ -321,7 +295,7 @@ public class CarServiceImpl implements CarService {
             }
 
             Car car = carOptional.get();
-            CarEnvelop carEnvelop = convertToCarEnvelop(car);
+            CarEnvelop carEnvelop = new CarEnvelop(car);
             if (user.getRole().equals(UserRole.CLIENT)) {
                 car.setClicks(car.getClicks()+1);
                 carRepository.save(car);

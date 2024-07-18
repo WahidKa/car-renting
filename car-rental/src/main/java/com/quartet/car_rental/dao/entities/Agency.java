@@ -33,4 +33,7 @@ public class Agency {
 
     @OneToMany(mappedBy = "agency")
     private List<Car> cars;
+
+    @OneToMany(mappedBy = "agency")
+    private List<User> users;
 }

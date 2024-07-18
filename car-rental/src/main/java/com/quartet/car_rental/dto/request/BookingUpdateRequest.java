@@ -5,9 +5,9 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class BookingRequest {
-    private Long carId;
+public class BookingUpdateRequest {
+    private Long bookingId;
     private Date startDate;
     private Date endDate;
-    private PersonalInfo personalInfo;
+    private String status;
 }

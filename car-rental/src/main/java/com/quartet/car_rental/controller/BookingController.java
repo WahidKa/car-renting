@@ -1,7 +1,9 @@
 package com.quartet.car_rental.controller;
 
 import com.quartet.car_rental.dto.request.BookingRequest;
+import com.quartet.car_rental.dto.request.BookingUpdateRequest;
 import com.quartet.car_rental.dto.response.BookingResponse;
+import com.quartet.car_rental.helper.JwtUtil;
 import com.quartet.car_rental.service.BookingService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,70 +27,193 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @PostMapping
-    @PreAuthorize("hasAuthority('CLIENT')")
-    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request,
-                                                         @RequestHeader Map<String, String> headers) {
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT')")
+    public ResponseEntity<BookingResponse> createBooking(@RequestHeader Map<String, String> headers,
+                                                         @RequestBody BookingRequest request) {
+        logger.info("### controller - Create Booking - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new BookingResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String email = jwt.getSubject();
+
         try {
-            String username = headers.get("username");
-            BookingResponse response = bookingService.createBooking(username, request);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            BookingResponse response = bookingService.createBooking(email, request);
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Create Booking - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.CREATED);
+            } else {
+                logger.error("Error creating booking: {}", response.getMessage());
+                logger.info("### controller - Create Booking - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             logger.error("Error creating booking: {}", e.getMessage());
-            return new ResponseEntity<>(new BookingResponse("Error creating booking"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new BookingResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLIENT')")
-    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("id") Long id,
-                                                         @RequestBody BookingRequest request,
+    @PutMapping
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT') or hasAuthority('SCOPE_AGENCY')")
+    public ResponseEntity<BookingResponse> updateBooking(@RequestBody BookingUpdateRequest request,
                                                          @RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Update Booking - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new BookingResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String email = jwt.getSubject();
+
         try {
-            String username = headers.get("username");
-            BookingResponse response = bookingService.updateBooking(username, id, request);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            BookingResponse response = bookingService.updateBooking(email, request);
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Update Booking - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else if ("403".equals(response.getStatus())) {
+                logger.info("### controller - Update Booking - Forbidden ###");
+                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            } else if ("404".equals(response.getStatus())) {
+                logger.info("### controller - Update Booking - Not Found ###");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            } else {
+                logger.error("Error updating booking: {}", response.getMessage());
+                logger.info("### controller - Update Booking - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             logger.error("Error updating booking: {}", e.getMessage());
-            return new ResponseEntity<>(new BookingResponse("Error updating booking"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new BookingResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLIENT')")
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT')")
     public ResponseEntity<BookingResponse> cancelBooking(@PathVariable("id") Long id,
                                                          @RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Cancel Booking - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new BookingResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String email = jwt.getSubject();
+
         try {
-            String username = headers.get("username");
-            BookingResponse response = bookingService.cancelBooking(username, id);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            BookingResponse response = bookingService.cancelBooking(email, id);
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Cancel Booking - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else if ("403".equals(response.getStatus())) {
+                logger.info("### controller - Cancel Booking - Forbidden ###");
+                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            } else if ("404".equals(response.getStatus())) {
+                logger.info("### controller - Cancel Booking - Not Found ###");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            } else {
+                logger.error("Error cancelling booking: {}", response.getMessage());
+                logger.info("### controller - Cancel Booking - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             logger.error("Error cancelling booking: {}", e.getMessage());
-            return new ResponseEntity<>(new BookingResponse("Error cancelling booking"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new BookingResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookingResponse> getBookingDetails(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT') or hasAuthority('SCOPE_AGENCY')")
+    public ResponseEntity<BookingResponse> getBookingDetails(@PathVariable("id") Long id,
+                                                             @RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Get Booking Details - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new BookingResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String email = jwt.getSubject();
+
         try {
-            BookingResponse response = bookingService.getBookingDetails(id);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            BookingResponse response = bookingService.getBookingDetails(id, email);
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Get Booking Details - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else if ("403".equals(response.getStatus())) {
+                logger.info("### controller - Get Booking Details - Forbidden ###");
+                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            } else if ("404".equals(response.getStatus())) {
+                logger.info("### controller - Get Booking Details - Not Found ###");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            } else {
+                logger.error("Error retrieving booking details: {}", response.getMessage());
+                logger.info("### controller - Get Booking Details - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             logger.error("Error retrieving booking details: {}", e.getMessage());
-            return new ResponseEntity<>(new BookingResponse("Error retrieving booking details"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new BookingResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping("/user")
-    @PreAuthorize("hasAuthority('CLIENT')")
-    public ResponseEntity<List<BookingResponse>> getUserBookings(@RequestHeader Map<String, String> headers) {
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT') or hasAuthority('SCOPE_AGENCY')")
+    public ResponseEntity<BookingResponse> getUserBookings(@RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Get User Bookings - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(new BookingResponse("403", "Missing or invalid Authorization header"), HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String email = jwt.getSubject();
+
         try {
-            String username = headers.get("username");
-            List<BookingResponse> responses = bookingService.getUserBookings(username);
-            return new ResponseEntity<>(responses, HttpStatus.OK);
+            BookingResponse response = bookingService.getUserBookings(email);
+            if ("200".equals(response.getStatus())) {
+                logger.info("### controller - Get User Bookings - Success ###");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else if ("403".equals(response.getStatus())) {
+                logger.info("### controller - Get User Bookings - Forbidden ###");
+                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            } else if ("404".equals(response.getStatus())) {
+                logger.info("### controller - Get User Bookings - Not Found ###");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            } else {
+                logger.error("Error retrieving user bookings: {}", response.getMessage());
+                logger.info("### controller - Get User Bookings - Error ###");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (Exception e) {
             logger.error("Error retrieving user bookings: {}", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new BookingResponse("500", "Technical error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

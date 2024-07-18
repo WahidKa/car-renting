@@ -30,6 +30,12 @@ public class User {
     @Column(name = "job", length = 50)
     private String job;
 
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "cin", length = 20)
+    private String cin;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
