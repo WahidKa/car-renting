@@ -49,7 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/api/auth/**").permitAll()
-                .antMatchers("/api/cars/**","/api/bookings/**", "/api/notification").hasAnyAuthority("SCOPE_AGENCY", "SCOPE_CLIENT")
+                .antMatchers("/api/cars/**","/api/bookings/**", "/api/bookings/**/**", "/api/notification").hasAnyAuthority("SCOPE_AGENCY", "SCOPE_CLIENT")
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

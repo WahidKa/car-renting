@@ -7,11 +7,13 @@ import com.quartet.car_rental.dao.UserRepository;
 import com.quartet.car_rental.dao.entities.*;
 import com.quartet.car_rental.dto.Envelop.BookingEnvelop;
 import com.quartet.car_rental.dto.Envelop.CarEnvelop;
+import com.quartet.car_rental.dto.Envelop.HistoryEnvelop;
 import com.quartet.car_rental.dto.Envelop.UserEnvelop;
 import com.quartet.car_rental.dto.request.BookingRequest;
 import com.quartet.car_rental.dto.request.BookingUpdateRequest;
 import com.quartet.car_rental.dto.request.PersonalInfo;
 import com.quartet.car_rental.dto.response.BookingResponse;
+import com.quartet.car_rental.dto.response.HistoryResponse;
 import com.quartet.car_rental.service.BookingService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -376,6 +378,51 @@ public class BookingServiceImpl implements BookingService {
             response.setMessage("Technical error: " + e.getMessage());
         }
         return response;
+    }
+
+    @Override
+    public HistoryResponse getRideHistory(String email) {
+        HistoryResponse historyResponse = new HistoryResponse();
+        try {
+            logger.info("### service - Get Ride History - Begin ###");
+
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (!userOptional.isPresent()) {
+                logger.info("User not found: {}", email);
+                historyResponse.setStatus("404");
+                historyResponse.setMessage("User not found");
+                return historyResponse;
+            }
+
+            User user = userOptional.get();
+            List<Booking> bookings;
+
+            bookings = bookingRepository.findByUserIdAndStatus(user.getId(), BookingStatus.COMPLETED);
+
+            List<HistoryEnvelop> envelop = bookings.stream()
+                    .map(this::convertToBookingResponse)
+                    .collect(Collectors.toList());
+
+            historyResponse.setStatus("200");
+            historyResponse.setMessage("Ride history fetched successfully");
+            historyResponse.setBookings(envelop);
+
+            logger.info("### service - Get Ride History - End ###");
+        } catch (Exception e) {
+            logger.error("### service - Get Ride History - Technical error - End ###", e);
+            historyResponse.setStatus("500");
+            historyResponse.setMessage("Technical error: " + e.getMessage());
+        }
+        return historyResponse;
+    }
+
+    private HistoryEnvelop convertToBookingResponse(Booking booking) {
+        String carImage = booking.getCar().getImages().isEmpty() ? null : booking.getCar().getImages().get(0).getImagePath();
+        String carModel = booking.getCar().getModel();
+        double price = booking.getCar().getPrice();
+        int numberOfDaysBooked = (int) ((booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 60 * 60 * 24));
+
+        return new HistoryEnvelop(carImage, carModel, price, numberOfDaysBooked);
     }
 
 }

@@ -3,6 +3,7 @@ package com.quartet.car_rental.controller;
 import com.quartet.car_rental.dto.request.BookingRequest;
 import com.quartet.car_rental.dto.request.BookingUpdateRequest;
 import com.quartet.car_rental.dto.response.BookingResponse;
+import com.quartet.car_rental.dto.response.HistoryResponse;
 import com.quartet.car_rental.helper.JwtUtil;
 import com.quartet.car_rental.service.BookingService;
 import org.apache.logging.log4j.LogManager;
@@ -216,4 +217,28 @@ public class BookingController {
         }
     }
 
+    @GetMapping("/rides/history")
+    @PreAuthorize("hasAuthority('SCOPE_CLIENT') or hasAuthority('SCOPE_AGENCY')")
+    public ResponseEntity<HistoryResponse> getRideHistory(@RequestHeader Map<String, String> headers) {
+        logger.info("### controller - Get Ride History - Begin ###");
+
+        String authorizationHeader = headers.get("authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            logger.info("Missing or invalid Authorization header");
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        String token = authorizationHeader.substring(7); // Remove "Bearer " prefix
+        Jwt jwt = jwtUtil.validateToken(token); // Validate the access token
+        String email = jwt.getSubject();
+
+        try {
+            HistoryResponse rideHistory = bookingService.getRideHistory(email);
+            logger.info("### controller - Get Ride History - Success ###");
+            return new ResponseEntity<>(rideHistory, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error fetching ride history: {}", e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
 }

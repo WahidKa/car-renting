@@ -1,6 +1,7 @@
 package com.quartet.car_rental.dto.response;
 
 import com.quartet.car_rental.dto.Envelop.BookingEnvelop;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class BookingResponse {
     private String message;
     private String status;
