@@ -57,6 +57,7 @@ public class TokenServiceImpl implements TokenService {
         // Fetch the user from the repository to get the role
         User user = userRepository.findByEmail(subject).orElseThrow(() -> new Exception("User not found"));
         scope = user.getRole().name();
+        String agency = user.getAgency()!= null ? user.getAgency().getName(): user.getFirstName() + " "+ user.getLastName();
 
         Map<String, String> tokens = new HashMap<>();
         Instant now = Instant.now();
@@ -67,6 +68,7 @@ public class TokenServiceImpl implements TokenService {
                 .expiresAt(now.plus(7, ChronoUnit.DAYS))
                 .issuer("car-rental-service")
                 .claim("scope", scope)
+                .claim("user", agency)
                 .build();
 
         String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
